@@ -1,3 +1,4 @@
+import random
 from urllib.parse import urljoin
 from faker import Faker
 import requests
@@ -9,6 +10,8 @@ fake = Faker()
 
 class DataGenerator(object):
     access_tokens = []
+    bands = []
+    compositions = []
 
     def generate_access_tokens(self):
         for i in range(USERS_COUNT):
@@ -26,10 +29,20 @@ class DataGenerator(object):
                 {'name': fake.company(), 'description': fake.text()},
                 headers={'token': access_token}
             )
-            print(response.json())
+            self.bands.append(response.json())
 
     def create_compositions(self):
-        pass
+        for i in range(COMPOSITIONS_COUNT):
+            access_token = self.access_tokens[i % len(self.access_tokens)]
+            response = requests.post(
+                urljoin(URL, COMPOSITIONS_URL),
+                {
+                    'name': fake.text(max_nb_chars=30),
+                    'band': self.bands[random.randint(0, len(self.bands) - 1)]['id']
+                },
+                headers={'token': access_token}
+            )
+            self.compositions.append(response.json())
 
     def run(self):
         self.generate_access_tokens()
