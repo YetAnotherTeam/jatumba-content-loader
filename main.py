@@ -5,7 +5,7 @@ import requests
 
 from settings import *
 
-fake = Faker()
+fake = Faker('ru_RU')
 
 
 class DataGenerator(object):
@@ -15,10 +15,11 @@ class DataGenerator(object):
 
     def generate_access_tokens(self):
         for i in range(USERS_COUNT):
+            first_name, last_name = fake.name().split(' ', 1)
             response = requests.post(
                 urljoin(URL, SIGN_UP_URL),
                 {'username': fake.user_name(), 'password': fake.password(),
-                 'first_name': fake.first_name(), 'last_name': fake.last_name()})
+                 'first_name': first_name, 'last_name': last_name})
             self.access_tokens.append(response.json()['session']['access_token'])
 
     def create_bands(self):
