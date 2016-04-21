@@ -5,21 +5,21 @@ import requests
 
 from settings import *
 
-fake = Faker('ru_RU')
-fake_eng = Faker()
+fake = Faker()
 
 
 class DataGenerator(object):
     access_tokens = []
     bands = []
     compositions = []
+    instruments = []
 
     def generate_access_tokens(self):
         for i in range(USERS_COUNT):
             first_name, last_name = fake.name().split(' ', 1)
             response = requests.post(
                 urljoin(URL, SIGN_UP_URL),
-                {'username': fake_eng.user_name(), 'password': fake.password(),
+                {'username': fake.user_name(), 'password': fake.password(),
                  'first_name': first_name, 'last_name': last_name})
             self.access_tokens.append(response.json()['session']['access_token'])
 
@@ -46,13 +46,24 @@ class DataGenerator(object):
             )
             self.compositions.append(response.json())
 
+    def get_instruments(self):
+        access_token = self.access_tokens[0]
+        json_response = requests.get(
+            urljoin(URL, INSRTUMENT_URL),
+            headers={'token': access_token}
+        ).json()
+        self.instruments_ids = [instrument['id'] for instrument in json_response]
+
     def create_members(self):
         for i in range(MEMBER_COUNT):
             access_token = self.access_tokens[i % len(self.access_tokens)]
             response = requests.post(
                 urljoin(URL, MEMBER_URL),
                 {
-                    'instrument': random.randint(1, INSTRUMENT_COUNT),
+                    'instrument': self.instruments_ids[random.randint(
+                        0,
+                        len(self.instruments_ids) - 1)
+                    ],
                     'band': self.bands[random.randint(0, len(self.bands) - 1)]['id']
                 },
                 headers={'token': access_token}
@@ -62,6 +73,8 @@ class DataGenerator(object):
         self.generate_access_tokens()
         self.create_bands()
         self.create_compositions()
+        self.get_instruments()
+        self.create_members()
 
 
 def main():
