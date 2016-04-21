@@ -6,6 +6,7 @@ import requests
 from settings import *
 
 fake = Faker('ru_RU')
+fake_eng = Faker()
 
 
 class DataGenerator(object):
@@ -18,7 +19,7 @@ class DataGenerator(object):
             first_name, last_name = fake.name().split(' ', 1)
             response = requests.post(
                 urljoin(URL, SIGN_UP_URL),
-                {'username': fake.user_name(), 'password': fake.password(),
+                {'username': fake_eng.user_name(), 'password': fake.password(),
                  'first_name': first_name, 'last_name': last_name})
             self.access_tokens.append(response.json()['session']['access_token'])
 
@@ -44,6 +45,18 @@ class DataGenerator(object):
                 headers={'token': access_token}
             )
             self.compositions.append(response.json())
+
+    def create_members(self):
+        for i in range(MEMBER_COUNT):
+            access_token = self.access_tokens[i % len(self.access_tokens)]
+            response = requests.post(
+                urljoin(URL, MEMBER_URL),
+                {
+                    'instrument': random.randint(1, INSTRUMENT_COUNT),
+                    'band': self.bands[random.randint(0, len(self.bands) - 1)]['id']
+                },
+                headers={'token': access_token}
+            )
 
     def run(self):
         self.generate_access_tokens()
